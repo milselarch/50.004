@@ -13,6 +13,24 @@ class Array(object):
 
             self.items = list(items)
 
+    def pop(self):
+        return self.items.pop()
+
+    def get(self, index, default=None):
+        if index <= len(self):
+            return self[index]
+
+        return default
+
+    def __contains__(self, item):
+        return item in self.items
+
+    def append(self, item):
+        self.items.append(item)
+
+    def __delitem__(self, key):
+        del self.items[self.translate_index(key)]
+
     def __getitem__(self, index):
         new_index = self.translate_index(index)
         return self.items[new_index]

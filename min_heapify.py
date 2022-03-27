@@ -2,6 +2,7 @@ import random
 
 from library import *
 
+
 def children(index):
     return index * 2, index * 2 + 1
 
@@ -49,6 +50,7 @@ def get_max_child(index, array: Array, size=None):
 def parent(index):
     return index // 2
 
+
 def verify_min_heap(array):
     # print('length', len(array), array.items)
 
@@ -79,7 +81,7 @@ def min_heapify(array, index, size=None):
     while True:
         child = get_min_child(index, array, size)
         if child is None:
-            return
+            return index
 
         child_val = array[child]
         current_value = array[index]
@@ -88,7 +90,8 @@ def min_heapify(array, index, size=None):
             array[child], array[index] = array[index], array[child]
             index = child
         else:
-            return
+            return index
+
 
 def max_heapify(array, index, size=None):
     if size is None:
@@ -97,7 +100,7 @@ def max_heapify(array, index, size=None):
     while True:
         child = get_max_child(index, array, size)
         if child is None:
-            return
+            return index
 
         child_val = array[child]
         current_value = array[index]
@@ -106,7 +109,8 @@ def max_heapify(array, index, size=None):
             array[child], array[index] = array[index], array[child]
             index = child
         else:
-            return
+            return index
+
 
 def build_min_heap(array):
     # sort lowest level of tree first
