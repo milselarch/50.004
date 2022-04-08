@@ -33,8 +33,15 @@ class Array(object):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            assert index.stop < 0
-            return self.items[index]
+            if index.stop < 0:
+                assert index.start is None
+                assert index.step is None
+                return self.items[index]
+            else:
+                start = self.translate_index(index.start)
+                stop, step = index.stop, index.step
+                assert stop > 0
+                return Array(elf.items[start:stop:step])
 
         new_index = self.translate_index(index)
         return self.items[new_index]

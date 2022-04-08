@@ -13,4 +13,4 @@ graph = WeightedGraph(edge_weights={
     ('s', 'y'): 5
 })
 
-graph.dijkstras('s', node_order=['s', 't', 'x', 'y', 'z'])
+graph.dijkstras('x', node_order=['x', 's', 't', 'y', 'z'])
