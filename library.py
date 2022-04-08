@@ -32,6 +32,10 @@ class Array(object):
         del self.items[self.translate_index(key)]
 
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            assert index.stop < 0
+            return self.items[index]
+
         new_index = self.translate_index(index)
         return self.items[new_index]
 
