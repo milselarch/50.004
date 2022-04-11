@@ -18,39 +18,57 @@ def max_value(
 
     if max_items == 0:
         return 0
-    if max_size == 0:
+    if len(item_limits) == 0:
         return 0
-    if sum(item_limits) == 0:
-        return 0
+
+    item_no = len(item_limits)
+    p1 = max_value(
+        item_sizes, item_values, item_limits[:-1],
+        max_size, max_items, cache=cache
+    )
 
     if item_limits[-1] == 0:
-        return max_value(
-            item_sizes, item_values, item_limits[::][:-1],
-            max_size, max_items, cache=cache
-        )
+        return p1
+    elif max_size < item_sizes[item_no]:
+        return p1
+    else:
+        for item_limit in item_limits:
+            assert item_limit >= 0
+
+    assert max_size >= 0
+    assert max_items >= 0
+    cache_key = item_limits.to_tuple() + (max_size, max_items)
+    if cache_key in cache:
+        return cache[cache_key]
 
     # remove item from selection
-    new_item_limits2 = item_limits[::]
-    new_item_limits2[-1] -= 1
+    # new_item_limits2 = item_limits.copy()
+    # new_item_limits2.items[-1] -= 1
 
-    item_value = item_values[-1]
-    item_size = item_sizes[-1]
+    item_value = item_values[item_no]
+    item_size = item_sizes[item_no]
 
-    p1 = max_value(
-        item_sizes, item_values, item_limits[::][:-1],
-        max_size, max_items
-    )
+    assert max_size >= item_size
     p2 = item_value + max_value(
-        item_sizes, item_values, new_item_limits2,
-        max_size-item_size, max_items - 1
+        item_sizes, item_values,
+        item_limits[:-1] + [item_limits[-1]-1],
+        max_size-item_size, max_items-1, cache=cache
     )
 
-    return max(p1, p2)
+    loot_value = max(p1, p2)
+    cache[cache_key] = loot_value
+    # print(cache_key, loot_value)
+    return loot_value
 
 
 if __name__ == '__main__':
-    random.seed(42)
+    random.seed(1223121122112222)
     sizes = generate()
     values = generate()
     inventory = generate(start=1, end=10)
     print(sizes, values, inventory)
+
+    print('loot value =', max_value(
+        sizes, values, inventory,
+        max_size=1000, max_items=20
+    ))

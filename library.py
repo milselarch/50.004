@@ -8,13 +8,21 @@ class Array(object):
             assert len(items) == 1
             self.items = items[0]
         else:
-            for item in items:
-                assert type(item) in (float, int)
-
             self.items = list(items)
+
+    def copy(self):
+        return Array(self.items[::])
 
     def pop(self):
         return self.items.pop()
+
+    def __iter__(self):
+        for item in self.items:
+            yield item
+
+    def __add__(self, other):
+        if type(other) is list:
+            return Array(self.items + other)
 
     def get(self, index, default=None):
         if index <= len(self):
@@ -33,10 +41,13 @@ class Array(object):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
+            if index == slice(None):
+                return Array(self.items[::])
+
             if index.stop < 0:
                 assert index.start is None
                 assert index.step is None
-                return self.items[index]
+                return Array(self.items[index])
             else:
                 start = self.translate_index(index.start)
                 stop, step = index.stop, index.step
@@ -45,6 +56,9 @@ class Array(object):
 
         new_index = self.translate_index(index)
         return self.items[new_index]
+
+    def to_tuple(self):
+        return tuple(self.items)
 
     def disable_negative_indexing(self):
         self.negative_indexing = False
