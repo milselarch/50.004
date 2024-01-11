@@ -2,33 +2,21 @@ from typing import List
 
 
 def longestConsecutive(nums: List[int]) -> int:
-    nums = list(set(nums))
+    hashset = set(nums)
+    nums = list(hashset)
     if len(nums) <= 1:
         return len(nums)
 
-    sorted_nums = sorted(nums)
-    consec_mapping = {}
+    longest = 0
+    for k in range(len(nums)):
+        length = 0
 
-    for k in range(len(nums) - 1):
-        if sorted_nums[k] + 1 == sorted_nums[k + 1]:
-            consec_mapping[sorted_nums[k]] = True
-            consec_mapping[sorted_nums[k + 1]] = True
+        while nums[k + length] + 1 in hashset:
+            length += 1
 
-    consec_nums = sorted(list(consec_mapping.keys()))
-    print(consec_nums)
-    consec_length, max_consec_length = 1, 1
+        longest = max(longest, length)
 
-    for k in range(1, len(consec_nums)):
-        if consec_nums[k] == consec_nums[k - 1] + 1:
-            consec_length += 1
-        else:
-            consec_length = 1
-
-        max_consec_length = max(
-            consec_length, max_consec_length
-        )
-
-    return max_consec_length
+    return longest
 
 
 if __name__ == '__main__':
