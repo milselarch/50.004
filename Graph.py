@@ -1,5 +1,5 @@
 from PriorityQueue import MinHeapPriorityQueue as PriorityQueue
-from Queue import Queue
+from CustomQueue import Queue
 
 
 class WeightedGraph(object):
