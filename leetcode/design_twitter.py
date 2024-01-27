@@ -2,11 +2,34 @@ from collections import deque
 from typing import List, Dict, Set, Deque
 
 
+__DEBUG__ = True
+
+
+def log(*args, **kwargs):
+    if __DEBUG__:
+        print(*args, **kwargs)
+
+
 class Tweet(object):
     def __init__(self, tweet_id: int, sender_id: int, stamp: int):
-        self.sender_id = sender_id
         self.tweet_id = tweet_id
+        self.sender_id = sender_id
         self.stamp = stamp
+
+    def serialize(self):
+        return self.tweet_id, self.sender_id, self.stamp
+
+    def __hash__(self):
+        return hash(self.serialize())
+
+    def __eq__(self, other):
+        assert type(other) == Tweet
+        return self.serialize() == other.serialize()
+
+    def __repr__(self):
+        return self.__class__.__name__ + (
+            f'({self.tweet_id}, {self.sender_id}, {self.stamp})'
+        )
 
 
 class Twitter:
@@ -21,6 +44,7 @@ class Twitter:
 
         self.tweet_origin: Dict[int, Tweet] = {}
         self.feed: Dict[int, Deque[Tweet]] = {}
+        self.feed_set: Dict[int, Set[Tweet]] = {}
 
     def postTweet(self, userId: int, tweetId: int) -> None:
         if userId not in self.tweets_sent:
@@ -41,14 +65,16 @@ class Twitter:
         for follower in followed:
             self.addToFeed(follower, tweet)
 
-    def addToFeed(self, userId, tweetId):
+    def addToFeed(self, userId, tweet: Tweet):
         if userId not in self.feed:
             self.feed[userId] = deque()
+            self.feed_set[userId] = set()
 
-        self.feed[userId].appendleft(tweetId)
+        self.feed[userId].appendleft(tweet)
+        self.feed_set[userId].add(tweet)
 
     def getNewsFeed(self, userId: int) -> List[int]:
-        # print('GET_NEWS_FEED', userId, self.feed[userId], self.followed)
+        log('GET_NEWS_FEED', userId, self.feed, self.followed)
         user_feed = self.feed.get(userId, deque())
         recent = []
 
@@ -63,8 +89,10 @@ class Twitter:
             # print('TWC', tweet, tweet_creator)
             if (userId in followers_of_tweet) or (tweet_creator == userId):
                 recent.append(tweet)
+            else:
+                print('POP', tweet)
 
-        return [tweet.sender_id for tweet in recent]
+        return [tweet.tweet_id for tweet in recent]
 
     def follow(self, followerId: int, followeeId: int) -> None:
         """
@@ -72,7 +100,7 @@ class Twitter:
         :param followeeId: person who is being followed
         :return:
         """
-        if followeeId not in self.followers:
+        if followeeId not in self.followed:
             self.followed[followeeId] = set()
 
         self.followed[followeeId].add(followerId)
@@ -82,37 +110,88 @@ class Twitter:
 
         self.followers[followerId].add(followeeId)
 
-        feed = self.feed.get(followerId, deque())
+        if followerId not in self.feed:
+            self.feed[followerId] = deque()
+            self.feed_set[followerId] = set()
+
+        feed = self.feed[followerId]
+        feed_set = self.feed_set[followerId]
         # get history of tweets sent by newly followed user
-        tweets_history = self.tweets_history[followerId]
+        log('OLD_FEED', followerId, feed)
+
+        try:
+            tweets_history = self.tweets_history[followeeId]
+            log('TWEET_HIST', tweets_history)
+        except KeyError:
+            log('NO_TWEET_HIST')
+            return
+
         sent_tweet_idx = 0
-        prev_tweet_id = -1
+        prev_tweet_stamp = float('inf')
+        all_tweets_added = False
         k = 0
 
+        # add new followee tweet history to Twitter feed
         while k < len(feed):
             tweet = feed[k]
-            tweet_id = tweet.tweet_id
-            sent_tweet_id = tweets_history[sent_tweet_idx].tweet_id
+            tweet_stamp = tweet.stamp
+            sent_tweet = tweets_history[sent_tweet_idx]
+            sent_tweet_stamp = sent_tweet.stamp
+            new_tweets_added = False
 
-            while tweet_id > sent_tweet_id > prev_tweet_id:
-                raise NotImplementedError
+            while prev_tweet_stamp > sent_tweet_stamp > tweet_stamp:
+                log('INSERT', k, sent_tweet)
+                feed.insert(k, sent_tweet)
+                feed_set.add(sent_tweet)
+                sent_tweet_idx += 1
 
+                if sent_tweet_idx >= len(tweets_history):
+                    all_tweets_added = True
+                    break
 
-            prev_tweet_id = tweet_id
+                new_tweets_added = Tweet
+                break
+
+            if all_tweets_added:
+                break
+            if new_tweets_added:
+                continue
+
+            prev_tweet_stamp = tweet_stamp
             k += 1
 
+        # add remaining tweets at tweet history end to feed end
+        log('REMAIN', feed)
+        while sent_tweet_idx < len(tweets_history):
+            sent_tweet = tweets_history[sent_tweet_idx]
+
+            if sent_tweet not in feed_set:
+                feed.append(sent_tweet)
+                feed_set.add(sent_tweet)
+
+            sent_tweet_idx += 1
+
+        log('NEW_FEED', followerId, feed)
+        log('TOTAL_FEED', self.feed)
 
     def unfollow(self, followerId: int, followeeId: int) -> None:
-        self.followers[followerId].remove(followeeId)
-        self.followed[followeeId].remove(followerId)
-        # print('FFF', followerId, self.feed[followerId])
+        try:
+            self.followers[followerId].remove(followeeId)
+        except KeyError:
+            pass
+
+        try:
+            self.followed[followeeId].remove(followerId)
+            # print('FFF', followerId, self.feed[followerId])
+        except KeyError:
+            pass
 
 
 if __name__ == '__main__':
     obj = Twitter()
 
-    commands = ["Twitter", "postTweet", "getNewsFeed", "follow", "getNewsFeed", "unfollow", "getNewsFeed"]
-    inputs = [[], [1, 1], [1], [2, 1], [2], [2, 1], [2]]
+    commands = ["Twitter","postTweet","follow","follow","getNewsFeed","postTweet","getNewsFeed","getNewsFeed","unfollow","getNewsFeed","getNewsFeed","unfollow","getNewsFeed","getNewsFeed"]
+    inputs = [[],[1,5],[1,2],[2,1],[2],[2,6],[1],[2],[2,1],[1],[2],[1,2],[1],[2]]
     results = []
 
     for command, command_input in zip(commands, inputs):
@@ -126,6 +205,7 @@ if __name__ == '__main__':
         results.append(result)
 
         print('RESULT >', result)
+        print('----------------')
 
     print(results)
 
