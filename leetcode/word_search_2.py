@@ -111,6 +111,7 @@ class Solution:
                     )
         else:
             last_coord = used_coords[-1]
+            explore_coords = set()
             del_chars = set()
 
             for (k, i) in ((1, 0), (-1, 0), (0, -1), (0, 1)):
@@ -125,6 +126,9 @@ class Solution:
                 if new_coord_orig != new_coord:
                     continue
 
+                explore_coords.add(new_coord)
+
+            for new_coord in explore_coords:
                 new_char = board[new_coord[0]][new_coord[1]]
                 if new_char not in trie_mapping:
                     continue
@@ -141,8 +145,14 @@ class Solution:
                     del_chars.add(new_char)
 
             for char in del_chars:
-                # del trie_mapping[char]
-                pass
+                sub_trie = trie_mapping[char]
+                can_delete = (
+                    'word' in sub_trie and
+                    len(sub_trie) == 1
+                )
+
+                if can_delete:
+                    del trie_m
 
         return found_words, word_found
 
