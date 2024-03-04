@@ -1,7 +1,6 @@
 from typing import List, Dict
 from collections import defaultdict
 
-
 class Solution:
     def build_itin(
         self, tickets, src_ticket_map, path=None, taken_indices=None
