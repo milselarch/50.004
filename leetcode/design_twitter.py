@@ -97,10 +97,8 @@ class Twitter:
             while tweet_id > sent_tweet_id > prev_tweet_id:
                 raise NotImplementedError
 
-
             prev_tweet_id = tweet_id
             k += 1
-
 
     def unfollow(self, followerId: int, followeeId: int) -> None:
         self.followers[followerId].remove(followeeId)
